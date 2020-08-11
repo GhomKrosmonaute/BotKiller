@@ -1,31 +1,49 @@
-const { MessageEmbed } = require("discord.js")
-const awaitMessages = require("../utils/awaitMessages")
+const { MessageEmbed } = require("discord.js");
+const awaitFreeChoices = require("../utils/awaitFreeChoices");
 
-async function cmd (message) {
-    const embed = new MessageEmbed()
+async function cmd(message) {
+  const embed = new MessageEmbed();
 
-    const messageEmbed = await message.channel.send(embed)
+  const messageEmbed = await message.channel.send(embed);
 
-    const refresh = () => messageEmbed.edit(embed)
+  await message.channel.send(
+    "Entrez de quoi modifier l'embed. Quand vous aurez fini, tapez `done`"
+  );
 
-    const results = await awaitMessages([
-        {
-            pattern: /^title\s*:?\s+(.+)/si,
-            action: groups => {
-                embed.setTitle(groups[0])
-                refresh()
-            }
+  await awaitFreeChoices(
+    message.channel,
+    [
+      {
+        pattern: /^tit[lr]e\s*:?\s+(.+)/is,
+        action: (result, embed, messageEmbed) => {
+          embed.setTitle(result.groups[0]);
+          messageEmbed.edit(embed);
         },
-        {
-            pattern: /^author\s*:?\s+(.+?)(?:\s+([^\s]+\.[a-z]+))?$/si,
-            action: groups => {
-                embed.setAuthor(groups[0],groups[1])
-                refresh()
-            }
-        }
-    ])
+      },
+      {
+        pattern: /^aut(?:ho|eu)r\s*:?\s+(.+?)(?:\s+([^\s]+\.[a-z]+))?$/is,
+        action: (result, embed, messageEmbed) => {
+          let mention =
+            result.message.mentions.members.first() ||
+            result.message.mentions.users.first();
+          if (mention) {
+            mention = mention.user || mention;
+            embed.setAuthor(
+              mention.username,
+              mention.displayAvatarURL({ dynamic: true })
+            );
+          } else {
+            embed.setAuthor(result.groups[0], result.groups[1]);
+          }
+          messageEmbed.edit(embed);
+        },
+      },
+    ],
+    embed,
+    messageEmbed
+  );
 }
 
-cmd.admin = true
+cmd.admin = true;
 
-module.exports = cmd
+module.exports = cmd;

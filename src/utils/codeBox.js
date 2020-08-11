@@ -1,2 +1,1 @@
-
-module.exports = string => "```js\n" + string + "\n```"
+module.exports = (string) => "```js\n" + string + "\n```";
